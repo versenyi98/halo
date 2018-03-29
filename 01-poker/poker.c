@@ -83,26 +83,17 @@ int main(){
 
 	osztas(kartyak, hand1, &pakli_i);
 	rendez(hand1);
-	printf("1:\t");
-
 	gyoker1 = royal_flush(gyoker1, hand1);
 
 
 	osztas(kartyak, hand2, &pakli_i);
 	rendez(hand2);
-	printf("2:\t");
-
 	gyoker2 = royal_flush(gyoker2, hand2);
 
-
-	if(gyoker2->tipus > 3 || gyoker1->tipus > 3){
-		kiir(hand1, szimbolum);
-		combo_ir(gyoker1, combo_nev);
-		kiir(hand2, szimbolum);
-		combo_ir(gyoker2, combo_nev);
-	} else{
-		system("./poker");
-	}
+	kiir(hand1, szimbolum);
+	combo_ir(gyoker1, combo_nev);
+	kiir(hand2, szimbolum);
+	combo_ir(gyoker2, combo_nev);
 
 /*
 	csere(kartyak, hand1, &pakli_i);
@@ -112,7 +103,7 @@ int main(){
 	kiir(hand1, szimbolum);
 */
 
-	winner(gyoker1, gyoker2);
+//	winner(gyoker1, gyoker2);
 
 	return 0;
 }
