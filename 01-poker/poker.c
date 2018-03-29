@@ -257,7 +257,7 @@ COMBO* four_of_a_kind(COMBO* gyok, KARTYA hand[]){
 
 COMBO* full_house(COMBO* gyok, KARTYA hand[]){
 
-	int egyezes;
+	int egyezes = 0;
 
 	for(int i = 0; i < 5; i++){
 		for(int j = i; j < 5; j++){
@@ -273,7 +273,7 @@ COMBO* full_house(COMBO* gyok, KARTYA hand[]){
 		gyok->kov = 0;								//drill
 
 	} else{
-		gyok = 0;
+		gyok = flush(gyok, hand);
 	}
 
 
@@ -281,8 +281,29 @@ COMBO* full_house(COMBO* gyok, KARTYA hand[]){
 	return gyok;
 }
 
+COMBO* flush(COMBO* gyok, KARTYA hand[]){
+
+	int egyezes = 0;
+	
+	for(int i = 0; i < 5; i++){
+		if(hand[i].szin = hand[0].szin){
+			egyezes++;	
+		}
+	}
+	if(egyezes == 5){
+		gyok = (COMBO*)malloc(sizeof(COMBO*));
+		gyok->tipus = 6;
+		gyok->ertek = 0;
+		gyok->kov = 0;						//magas lap	
+	} else{
+		gyok = 0;	
+	}
+	
+	return gyok;
+}
+
+
 /*
-COMBO* flush(COMBO* gyok, KARTYA hand[]);
 COMBO* straight(COMBO* gyok, KARTYA hand[]);
 COMBO* three_of_a_kind(COMBO* gyok, KARTYA hand[]);
 COMBO* two_pair(COMBO* gyok, KARTYA hand[]);
