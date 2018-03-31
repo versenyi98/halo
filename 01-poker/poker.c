@@ -23,7 +23,7 @@ void kever(KARTYA kartyak[], int meret);
 void osztas(KARTYA kartyak[], KARTYA hand[], int *index);
 void csere(KARTYA kartyak[], KARTYA hand[], int *index);
 void rendez(KARTYA hand[]);
-void kiir(KARTYA hand[], char* szimbolum[4]);
+void kiir(KARTYA hand[], char** szimbolum, char* spec);
 
 COMBO* royal_flush(COMBO* gyok, KARTYA hand[]);
 COMBO* straight_flush(COMBO* gyok, KARTYA hand[]);
@@ -36,11 +36,13 @@ COMBO* two_pair(COMBO* gyok, KARTYA hand[]);
 COMBO* pair(COMBO* gyok, KARTYA hand[]);
 COMBO* high_card(COMBO* gyok, KARTYA hand[], int num);
 
-void combo_ir(COMBO* gyok, char* nev[10]);
 void winner(COMBO* gyok1, COMBO* gyok2);
+void szabadit(COMBO* gyok);
+void combo_ir(COMBO* gyok);
 
 int main(){
 
+	srand(time(NULL));
 	KARTYA kartyak[54];
 
 	KARTYA hand1[5];
@@ -49,27 +51,9 @@ int main(){
 	KARTYA hand2[5];
 	COMBO* gyoker2 = 0;
 
-	char* combo_nev[10];
-
-	for(int i = 0; i < 10; i++){
-		combo_nev[i] = (char*)malloc(sizeof(char*));
-	}
-
-	strcpy(combo_nev[0], "Magas lap");
-	strcpy(combo_nev[1], "Egy par");
-	strcpy(combo_nev[2], "Ket par");
-	strcpy(combo_nev[3], "Drill");
-	strcpy(combo_nev[4], "Sor");
-	strcpy(combo_nev[5], "Flush");
-	strcpy(combo_nev[6], "Full House");
-	strcpy(combo_nev[7], "Poker");
-	strcpy(combo_nev[8], "Sor Flush");
-	strcpy(combo_nev[9], "Royal Flush");
-
-	char* szimbolum[4];
-
+	char** szimbolum = malloc(4*sizeof(char*));
 	for(int i = 0; i < 4; i++){
-		szimbolum[i] = (char*)malloc(sizeof(char*));
+		szimbolum[i] = malloc(10*sizeof(char));
 	}
 
 	strcpy(szimbolum[0], "\xE2\x99\xA0");
@@ -77,40 +61,51 @@ int main(){
 	strcpy(szimbolum[2], "\xE2\x99\xA5");
 	strcpy(szimbolum[3], "\xE2\x99\xA6");
 
-	int pakli_i = 0;
+	char* spec = malloc(4*sizeof(char));
+	spec[0] = 'J';
+	spec[1] = 'Q';
+	spec[2] = 'K';
+	spec[3] = 'A';
 
-	kever(kartyak, 54);
+	int pakli_i = 0;
+	char character;
+
+	pakli_i = 0;
+	kever(kartyak, 52);
 
 	osztas(kartyak, hand1, &pakli_i);
 	rendez(hand1);
-	gyoker1 = royal_flush(gyoker1, hand1);
 
+	gyoker1 = royal_flush(gyoker1, hand1);
 
 	osztas(kartyak, hand2, &pakli_i);
 	rendez(hand2);
+
 	gyoker2 = royal_flush(gyoker2, hand2);
 
-	kiir(hand1, szimbolum);
-	combo_ir(gyoker1, combo_nev);
-	kiir(hand2, szimbolum);
-	combo_ir(gyoker2, combo_nev);
+	kiir(hand1, szimbolum, spec); 
+	combo_ir(gyoker1);
+	kiir(hand2, szimbolum, spec); 
+	combo_ir(gyoker2);
 
-/*
-	csere(kartyak, hand1, &pakli_i);
+	winner(gyoker1, gyoker2);
 
-	rendez(hand1);
-	printf("VEGSO HAND\n");
-	kiir(hand1, szimbolum);
-*/
 
-//	winner(gyoker1, gyoker2);
+	szabadit(gyoker1);
+	szabadit(gyoker2);
+
+	for(int i = 0; i < 4; i++){
+		free(szimbolum[i]);
+	}
+	free(szimbolum);
+	free(spec);
+
 
 	return 0;
 }
 
 void kever(KARTYA kartyak[], int meret){
 
-	srand(time(NULL));
 	int counter = 0;
 
 	for(int i = 0; i < meret; i++){
@@ -125,10 +120,12 @@ void kever(KARTYA kartyak[], int meret){
 				}
 			}
 		}while(counter != 0);
-//		uj->azon = i;
-		uj->szin = uj->azon/14;
-		uj->ertek = (uj->azon%14)+1;
+		
+		uj->szin = uj->azon/13;
+		uj->ertek = (uj->azon)%13+2;
+
 		kartyak[i] = *uj;
+
 		free(uj);
 	}
 }
@@ -180,9 +177,14 @@ void csere(KARTYA kartyak[], KARTYA hand[], int *index){
 	}
 }
 
-void kiir(KARTYA hand[], char** szimbolum){
+void kiir(KARTYA hand[], char** szimbolum, char* spec){
 	for(int i = 0; i < 5; i++){
-		printf("%s %d\t", szimbolum[hand[i].szin], hand[i].ertek);
+		printf("%s ", szimbolum[hand[i].szin]);
+		if(hand[i].ertek <= 10){
+			printf("%d\t", hand[i].ertek);
+		} else{
+			printf("%c\t", spec[hand[i].ertek-11]);
+		}
 	}
 	printf("\n");
 }
@@ -204,6 +206,7 @@ void rendez(KARTYA hand[]){
 }
 
 COMBO* royal_flush(COMBO* gyok, KARTYA hand[]){
+
 	int szin = hand[0].szin;
 	int elozo = hand[0].ertek;
 
@@ -221,7 +224,7 @@ COMBO* royal_flush(COMBO* gyok, KARTYA hand[]){
 	}
 
 	if(eggyel_nagyobb == 4 && szin_egyez == 4 && elozo == 14){
-		gyok = (COMBO*)malloc(sizeof(COMBO*));
+		gyok = malloc(sizeof(COMBO));
 		gyok->tipus = 9;
 		gyok->ertek = 0;
 		gyok->kov = 0;
@@ -249,8 +252,13 @@ COMBO* straight_flush(COMBO* gyok, KARTYA hand[]){
 			elozo = hand[i].ertek;
 		}
 	}
-	if(eggyel_nagyobb == 4 && szin_egyez == 4 && elozo != 14){
-		gyok = (COMBO*)malloc(sizeof(COMBO*));
+
+	if(hand[3].ertek == 5 && hand[4].ertek == 14){
+		eggyel_nagyobb++;
+	}
+
+	if(eggyel_nagyobb == 4 && szin_egyez == 4){
+		gyok = malloc(sizeof(COMBO));
 		gyok->tipus = 8;
 		gyok->ertek = elozo;
 		gyok->kov = 0;	
@@ -271,10 +279,10 @@ COMBO* four_of_a_kind(COMBO* gyok, KARTYA hand[]){
 			}
 		}
 		if(talalt == 4){
-			gyok = (COMBO*)malloc(sizeof(COMBO*));
+			gyok = malloc(sizeof(COMBO));
 			gyok->tipus = 7;
 			gyok->ertek = hand[i].ertek;
-			gyok->kov = high_card(gyok->kov, hand, 4);
+			gyok->kov = 0;
 		}
 	}
 	if(gyok == 0){
@@ -296,7 +304,7 @@ COMBO* full_house(COMBO* gyok, KARTYA hand[]){
 		}	
 	}
 	if(egyezes == 9){
-		gyok = (COMBO*)malloc(sizeof(COMBO*));
+		gyok = malloc(sizeof(COMBO));
 		gyok->tipus = 6;
 		gyok->ertek = 0;
 		gyok->kov = three_of_a_kind(gyok->kov, hand);
@@ -319,7 +327,7 @@ COMBO* flush(COMBO* gyok, KARTYA hand[]){
 		}
 	}
 	if(egyezes == 5){
-		gyok = (COMBO*)malloc(sizeof(COMBO*));
+		gyok = malloc(sizeof(COMBO));
 		gyok->tipus = 5;
 		gyok->ertek = 0;
 		gyok->kov = high_card(gyok->kov, hand, 4);
@@ -331,18 +339,19 @@ COMBO* flush(COMBO* gyok, KARTYA hand[]){
 }
 
 COMBO* straight(COMBO* gyok, KARTYA hand[]){
-		
+
 	int counter = 0;
 
 	for(int i = 0; i < 4; i++){
 		if(hand[i+1].ertek-hand[i].ertek == 1){
 			counter++;
-		} else{
-			break;
 		}
 	}
+	if(hand[3].ertek == 5 && hand[4].ertek == 14){
+		counter++;
+	}
 	if(counter == 4){
-		gyok = (COMBO*)malloc(sizeof(COMBO*));
+		gyok = malloc(sizeof(COMBO));
 		gyok->tipus = 4;
 		gyok->ertek = hand[4].ertek;
 		gyok->kov = 0;
@@ -353,13 +362,14 @@ COMBO* straight(COMBO* gyok, KARTYA hand[]){
 }
 
 COMBO* three_of_a_kind(COMBO* gyok, KARTYA hand[]){
-	
-	for(int i = 1; i < 4; i++){
-		if(hand[i-1].ertek == hand[i].ertek && hand[i].ertek == hand[i+1].ertek){
-			gyok = (COMBO*)malloc(sizeof(COMBO*));
+
+	for(int i = 0; i < 3; i++){
+		if(hand[i].ertek == hand[i+1].ertek && hand[i+1].ertek == hand[i+2].ertek){
+			gyok = malloc(sizeof(COMBO));
 			gyok->tipus = 3;
+
 			gyok->ertek = hand[i].ertek;
-			gyok->kov = pair(gyok, hand);	
+			gyok->kov = 0;	
 			break;
 		}
 	} 
@@ -386,13 +396,13 @@ COMBO* two_pair(COMBO* gyok, KARTYA hand[]){
 		}
 	}
 	if(counter == 2){
-		gyok = (COMBO*)malloc(sizeof(COMBO*));
+		gyok = malloc(sizeof(COMBO));
 		gyok->tipus = 2;
 		gyok->ertek = 0;
-		gyok->kov = (COMBO*)malloc(sizeof(COMBO*));
+		gyok->kov = malloc(sizeof(COMBO));
 		gyok->kov->tipus = 1;
 		gyok->kov->ertek = nagy;
-		gyok->kov->kov = (COMBO*)malloc(sizeof(COMBO*));
+		gyok->kov->kov = malloc(sizeof(COMBO));
 		gyok->kov->kov->tipus = 1;
 		gyok->kov->kov->ertek = kicsi;
 		gyok->kov->kov->kov = high_card(gyok->kov->kov->kov, hand, 4);
@@ -405,10 +415,13 @@ COMBO* two_pair(COMBO* gyok, KARTYA hand[]){
 }
 
 COMBO* pair(COMBO* gyok, KARTYA hand[]){
+
 	for(int i = 0; i < 4; i++){
 		if(hand[i].ertek == hand[i+1].ertek){
-				if(i < 3 && hand[i+2].ertek != hand[i].ertek){
-				gyok = (COMBO*)malloc(sizeof(COMBO*));
+			if(i < 3 && hand[i+2].ertek == hand[i].ertek){
+				i = i+2;
+			} else{
+				gyok = malloc(sizeof(COMBO));
 				gyok->tipus = 1;
 				gyok->ertek = hand[i].ertek;
 				gyok->kov = high_card(gyok, hand, 4);			//magas lap
@@ -422,12 +435,13 @@ COMBO* pair(COMBO* gyok, KARTYA hand[]){
 	
 	return gyok;
 }
+
 COMBO* high_card(COMBO* gyok, KARTYA hand[], int num){
 
 	if(num < 0){
 		return 0;
 	} else{
-		gyok = (COMBO*)malloc(sizeof(COMBO*));
+		gyok = malloc(sizeof(COMBO));
 		gyok->tipus = 0;
 		gyok->ertek = hand[num].ertek; 
 		gyok->kov = high_card(gyok->kov, hand, num-1);
@@ -436,11 +450,11 @@ COMBO* high_card(COMBO* gyok, KARTYA hand[], int num){
 	
 }
 
-void combo_ir(COMBO* gyok, char* nev[10]){
+void combo_ir(COMBO* gyok){
 
 	if(gyok != 0){
-		printf("Ertek: %d \t Nev: %s \n",gyok->ertek, nev[gyok->tipus]);
-		combo_ir(gyok->kov, nev);
+		printf("E: %d \t T: %d \n",gyok->ertek, gyok->tipus);
+		combo_ir(gyok->kov);
 	}
 }
 
@@ -457,4 +471,13 @@ void winner(COMBO* gyok1, COMBO* gyok2){
 			winner(gyok1->kov, gyok2->kov);
 		}
 	}
+}
+
+void szabadit(COMBO* gyok){
+
+	if(gyok != NULL){
+		szabadit(gyok->kov);
+		free(gyok);
+	}
+
 }
