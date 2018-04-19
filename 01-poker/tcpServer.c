@@ -79,8 +79,12 @@ int main(){
 	server_adress.sin_addr.s_addr = INADDR_ANY;
 
 	//bind
-	bind(server_socket, (struct sockaddr *) &server_adress, sizeof(server_adress));	
-	
+	int binding = bind(server_socket, (struct sockaddr *) &server_adress, sizeof(server_adress));	
+	if(binding != 0){
+		printf("Nem sikerult a porthoz csatlakozni!\n");
+		exit(-1);
+	}	
+
 	listen(server_socket, 5); 
 
 //*****JÁTÉK******************************************************
@@ -90,9 +94,10 @@ int main(){
 	SZEMELY* player1 = malloc(sizeof(SZEMELY));
 	SZEMELY* player2 = malloc(sizeof(SZEMELY));
 
-	int pakli_i = 0;
 
 
+	player1->gyozelmek = 0;
+	player2->gyozelmek = 0;
 
 	player1->socket = accept(server_socket, NULL, NULL);
 	player2->socket = accept(server_socket, NULL, NULL);
@@ -114,6 +119,7 @@ int main(){
 	recv(player2->socket, player2->nev, sizeof(player2->nev), 0);
 
 for(int i = 0; i < jatszma; i++){
+	int pakli_i = 0;
 	kever(kartyak, 52);
 
 	osztas(kartyak, player1->hand, &pakli_i);
@@ -145,10 +151,25 @@ for(int i = 0; i < jatszma; i++){
 	combo_ir(player2->combo);
 
 	printf("\nA nyertes: %d\n", winner(player1->combo, player2->combo));
+//kört nyerte
+	char msg_winner[64] = "A kort megnyerte: ";
+
+	if(winner(player1->combo, player2->combo) == 0){
+		player1->gyozelmek++;
+		strcat(msg_winner, player1->nev);
+	} else if(winner(player1->combo, player2->combo) == 1){
+		player2->gyozelmek++;
+		strcat(msg_winner, player2->nev);
+	} else{
+		strcpy(msg_winner,"Dontetlen");
+	}
+ 	send(player1->socket, msg_winner, sizeof(msg_winner), 0);
+ 	send(player2->socket, msg_winner, sizeof(msg_winner), 0);
 
 	szabadit(player1->combo);
 	szabadit(player2->combo);
 
+//következő kör
 	char msg_next_round[50] = "Nyomj egy entert a kovetkezo korbe lepeshez...";
 	char msg_nextr_resp1[10];
 	char msg_nextr_resp2[10];
@@ -158,8 +179,29 @@ for(int i = 0; i < jatszma; i++){
  	send(player2->socket, msg_next_round, sizeof(msg_next_round), 0);
 	recv(player2->socket, &msg_nextr_resp2, sizeof(msg_nextr_resp2), 0);
 
+//jelen állás
 
+	char player1_nev[30];
+	strcpy(player1_nev, player1->nev);
+	char player1_pont[2];
+	player1_pont[0] = player1->gyozelmek + 'a';
+	player1_pont[1] = '\0';
 
+	char player2_nev[30];
+	strcpy(player2_nev, player2->nev);
+	char player2_pont[2];
+	player2_pont[0] = player2->gyozelmek + 'a';
+	player1_pont[1] = '\0';
+
+	send(player1->socket, player1_nev, sizeof(player1_nev), 0);
+	send(player1->socket, player1_pont, sizeof(player1_pont), 0);
+	send(player1->socket, player2_nev, sizeof(player2_nev), 0);
+	send(player1->socket, player2_pont, sizeof(player2_pont), 0);
+
+	send(player2->socket, player1_nev, sizeof(player1_nev), 0);
+	send(player2->socket, player1_pont, sizeof(player1_pont), 0);
+	send(player2->socket, player2_nev, sizeof(player2_nev), 0);
+	send(player2->socket, player2_pont, sizeof(player2_pont), 0);
 
 }
 	close(server_socket);
