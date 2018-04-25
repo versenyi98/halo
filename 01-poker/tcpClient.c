@@ -64,7 +64,9 @@ int main(){
 	//connect
 	int connection = connect(network_socket, (struct sockaddr *) &server_adress, sizeof(server_adress));
 	if(connection != 0){
+		printf("%d", connection);
 		printf("Valami elromlott..\n");
+		exit(-1);
 	}
 //*****JÁTÉK******************************************************
 //Jaték előtti beszélgetés
@@ -93,19 +95,35 @@ for(int i = 0; i < jatszma; i++){
 //2. osztás
 	szerver_osztas(network_socket, szimbolum, spec);
 	szerver_osztas(network_socket, szimbolum, spec);
-
+//kört nyerte
+	char msg_winner[64];
+	recv(network_socket, &msg_winner, sizeof(msg_winner), 0);
+	printf("Szerver: %s\n", msg_winner);
+//következő kör
 	char msg_next_round[50];
 	recv(network_socket, &msg_next_round, sizeof(msg_next_round), 0);
 	printf("Szerver: %s\n", msg_next_round);
 
 	char msg_nextr_resp[10];
-	fgets(msg_nextr_resp, 10, stdin);
+	fgets(msg_nextr_resp, 10, stdin);						//szemetet szed össze
 	fgets(msg_nextr_resp, 10, stdin);
   msg_nextr_resp[strlen(msg_nextr_resp)-1] = '\0';
 	send(network_socket, msg_nextr_resp, sizeof(msg_nextr_resp), 0);
 
-
 	system("clear");
+//jelen állás
+	char player1_nev[30];
+	char player1_pont[2];
+	char player2_nev[30];
+	char player2_pont[2];
+
+	recv(network_socket, &player1_nev, sizeof(player1_nev), 0);
+	recv(network_socket, &player1_pont, sizeof(player1_pont), 0);
+	recv(network_socket, &player2_nev, sizeof(player2_nev), 0);
+	recv(network_socket, &player2_pont, sizeof(player2_pont), 0);
+
+	printf("%d - %s\n%d - %s\n", (int)(player1_pont[0]-'a'), player1_nev, (int)(player2_pont[0]-'a'), player2_nev);
+
 }
 	close(network_socket);
 
