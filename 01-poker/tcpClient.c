@@ -13,7 +13,7 @@
 void szerver_csere(int socket);
 void szerver_osztas(int socket, char** szimbolum, char* special);
 
-int main(){
+int main(int argc, char *argv[]){
 //tömbök lefoglalása
 	//francia kártya szimbólumok
 	char** szimbolum = malloc(4*sizeof(char*));
@@ -55,11 +55,16 @@ int main(){
 	int network_socket;
 	network_socket = socket(AF_INET, SOCK_STREAM, 0);
 
+	char server_ip[16];
+   	sprintf(server_ip, "%s", argv[1]);
+
+	int ip = inet_addr(server_ip);
+
 	//adress
 	struct sockaddr_in server_adress;
 	server_adress.sin_family = AF_INET;
 	server_adress.sin_port = htons(9002);
-	server_adress.sin_addr.s_addr = INADDR_ANY;
+	server_adress.sin_addr.s_addr = ip;
 
 	//connect
 	int connection = connect(network_socket, (struct sockaddr *) &server_adress, sizeof(server_adress));
